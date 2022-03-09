@@ -1,0 +1,15 @@
+version: '3.8'
+services:
+  test-db:
+    image: postgres
+    ports:
+      - 5434:5432
+    environment:
+      POSTGRES_USER: asfand
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: nest
+    volumes:
+      - db_data:/var/lib/postgresql/db_data
+
+volumes:
+  db_data:
