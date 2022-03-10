@@ -1,11 +1,12 @@
 import { ForbiddenException, Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
+import { Role } from '@prisma/client';
 import { PrismaClientKnownRequestError } from '@prisma/client/runtime';
 import * as argon from 'argon2';
 import { Request } from 'express';
+import { UpdateDto } from 'src/auth/updatedto';
 import { PrismaService } from 'src/prisma/prisma.service';
-import { UpdateDto } from 'src/updatedto';
 
 import { JwtDecode } from './decode';
 import { AuthDto } from './dto';
@@ -24,11 +25,13 @@ export class AuthService {
     id: number,
     email: string,
     password: string,
+    role: Role,
   ): Promise<{ access_token: string }> {
     const payload = {
       sub: id,
       email,
       password,
+      role,
     };
     const secret = this.config.get('JWT_SECRET');
     const token = await this.jwt.signAsync(payload, {
@@ -42,10 +45,15 @@ export class AuthService {
     const hash = await argon.hash(dto.password);
     try {
       const user = await this.prisma.user.create({
-        data: { email: dto.email, firstName: dto.firstName, hash: hash },
+        data: {
+          email: dto.email,
+          firstName: dto.firstName,
+          hash: hash,
+          role: dto.role,
+        },
       });
 
-      const token = this.signToken(user.id, user.email, user.hash);
+      const token = this.signToken(user.id, user.email, user.hash, user.role);
       return token;
     } catch (error) {
       if (error instanceof PrismaClientKnownRequestError) {
@@ -63,25 +71,27 @@ export class AuthService {
     if (!user) throw new ForbiddenException('User Does Not Exist');
     const pwMatch = await argon.verify(user.hash, dto.password);
     if (!pwMatch) throw new ForbiddenException('Incorrect Credentials');
-    const token = this.signToken(user.id, user.email, user.hash);
+    const token = this.signToken(user.id, user.email, user.hash, user.role);
     return token;
   }
-  async deleteAll() {
-    await this.prisma.user.deleteMany();
-    return 'All Users Were Deleted Successfully';
-  }
-  async delete(email: string, request: Request) {
+
+  async delete(email: string, request: Request, role: Role) {
     const authHeader = request.get('Authorization');
     const accessToken = authHeader.slice(7);
     const accessEmail = await JwtDecode.retriveUserEmailFromAccessToken(
       this.jwt,
       accessToken,
     );
-    await this.prisma.user.delete({
-      where: { email: accessEmail },
-    });
-    return 'User deleted successfully';
+    if (role == 'ADMIN') {
+      await this.prisma.user.delete({
+        where: { email: accessEmail },
+      });
+      return 'User Deleted';
+    } else {
+      return 'Guest cannot delete';
+    }
   }
+
   async getUser(email: string, request: Request) {
     const authHeader = request.get('Authorization');
     const accessToken = authHeader.slice(7);

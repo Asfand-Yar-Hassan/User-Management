@@ -1,4 +1,6 @@
-import { IsEmail, IsNotEmpty, IsOptional, IsString } from 'class-validator';
+/* eslint-disable prettier/prettier */
+import { Role } from '@prisma/client';
+import { IsEmail, IsEnum, IsNotEmpty, IsOptional, IsString } from 'class-validator';
 
 export class AuthDto {
   @IsEmail()
@@ -13,4 +15,7 @@ export class AuthDto {
   @IsNotEmpty()
   @IsOptional()
   firstName: string;
+  @IsEnum(Role)
+  @IsNotEmpty()
+  role: Role;
 }

@@ -21,4 +21,13 @@ export class JwtDecode {
     };
     return decodedAccesstoken.sub;
   }
+  static retrieveUserRoleFromAccessToken(
+    jwt: JwtService,
+    accessToken: string,
+  ): string {
+    const decodeAccessToken = jwt.decode(accessToken) as {
+      [key: string]: any;
+    };
+    return decodeAccessToken.role;
+  }
 }

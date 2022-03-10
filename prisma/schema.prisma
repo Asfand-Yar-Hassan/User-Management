@@ -14,4 +14,9 @@ model User{
   email String @unique
   firstName String? 
   hash String
+role Role @default(GUEST)
+}
+enum Role{
+  GUEST
+  ADMIN
 }
