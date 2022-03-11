@@ -1,7 +1,7 @@
 import { ForbiddenException, Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
-import { Role } from '@prisma/client';
+import { Roles } from '@prisma/client';
 import { PrismaClientKnownRequestError } from '@prisma/client/runtime';
 import * as argon from 'argon2';
 import { Request } from 'express';
@@ -25,7 +25,7 @@ export class AuthService {
     id: number,
     email: string,
     password: string,
-    role: Role,
+    role: Roles,
   ): Promise<{ access_token: string }> {
     const payload = {
       sub: id,
@@ -75,21 +75,20 @@ export class AuthService {
     return token;
   }
 
-  async delete(email: string, request: Request, role: Role) {
+  async delete(email: string, request: Request) {
     const authHeader = request.get('Authorization');
     const accessToken = authHeader.slice(7);
     const accessEmail = await JwtDecode.retriveUserEmailFromAccessToken(
       this.jwt,
       accessToken,
     );
-    if (role == 'ADMIN') {
-      await this.prisma.user.delete({
-        where: { email: accessEmail },
-      });
-      return 'User Deleted';
-    } else {
-      return 'Guest cannot delete';
+    if (email === accessEmail) {
+      return 'Cannot delete user';
     }
+    const user = await this.prisma.user.delete({
+      where: { email: email },
+    });
+    return `${user.firstName} deleted`;
   }
 
   async getUser(email: string, request: Request) {

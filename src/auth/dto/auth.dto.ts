@@ -1,5 +1,5 @@
 /* eslint-disable prettier/prettier */
-import { Role } from '@prisma/client';
+import { Roles } from '@prisma/client';
 import { IsEmail, IsEnum, IsNotEmpty, IsOptional, IsString } from 'class-validator';
 
 export class AuthDto {
@@ -15,7 +15,8 @@ export class AuthDto {
   @IsNotEmpty()
   @IsOptional()
   firstName: string;
-  @IsEnum(Role)
+
+  @IsEnum(Roles)
   @IsNotEmpty()
-  role: Role;
+  role: Roles;
 }
