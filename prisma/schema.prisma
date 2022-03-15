@@ -15,6 +15,7 @@ model User{
   firstName String? 
   hash String
   role Roles @default(USER)
+  hashRt String?
 }
 enum Roles{
   USER

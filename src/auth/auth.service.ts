@@ -10,6 +10,7 @@ import { PrismaService } from 'src/prisma/prisma.service';
 
 import { JwtDecode } from './decode';
 import { AuthDto } from './dto';
+import { Tokens } from './types';
 
 @Injectable()
 export class AuthService {
@@ -21,27 +22,46 @@ export class AuthService {
     private config: ConfigService,
   ) {}
 
-  async signToken(
-    id: number,
-    email: string,
-    password: string,
-    role: Roles,
-  ): Promise<{ access_token: string }> {
-    const payload = {
-      sub: id,
-      email,
-      password,
-      role,
+  async signToken(id: number, email: string, password: string, role: Roles) {
+    const [at, rt] = await Promise.all([
+      this.jwt.signAsync(
+        {
+          sub: id,
+          email,
+          password,
+          role,
+        },
+        { expiresIn: 600, secret: this.config.get('AT_SECRET') },
+      ),
+      this.jwt.signAsync(
+        {
+          sub: id,
+          email,
+          password,
+          role,
+        },
+        { expiresIn: 604800, secret: this.config.get('RT_SECRET') },
+      ),
+    ]);
+    return {
+      accessToken: at,
+      refreshToken: rt,
     };
-    const secret = this.config.get('JWT_SECRET');
-    const token = await this.jwt.signAsync(payload, {
-      expiresIn: '10m',
-      secret: secret,
-    });
-    return { access_token: token };
   }
 
-  async signup(dto: AuthDto) {
+  async updateRtHash(id: number, rt: string) {
+    // const hash = await argon.hash(rt);
+    await this.prisma.user.update({
+      where: {
+        id: id,
+      },
+      data: {
+        hashRt: rt,
+      },
+    });
+  }
+
+  async signup(dto: AuthDto): Promise<Tokens> {
     const hash = await argon.hash(dto.password);
     try {
       const user = await this.prisma.user.create({
@@ -52,8 +72,8 @@ export class AuthService {
           role: dto.role,
         },
       });
-
       const token = this.signToken(user.id, user.email, user.hash, user.role);
+      await this.updateRtHash(user.id, (await token).refreshToken);
       return token;
     } catch (error) {
       if (error instanceof PrismaClientKnownRequestError) {
@@ -64,7 +84,7 @@ export class AuthService {
       throw error;
     }
   }
-  async signin(dto: AuthDto) {
+  async signin(dto: AuthDto): Promise<Tokens> {
     const user = await this.prisma.user.findUnique({
       where: { email: dto.email },
     });
@@ -72,6 +92,7 @@ export class AuthService {
     const pwMatch = await argon.verify(user.hash, dto.password);
     if (!pwMatch) throw new ForbiddenException('Incorrect Credentials');
     const token = this.signToken(user.id, user.email, user.hash, user.role);
+    await this.updateRtHash(user.id, (await token).refreshToken);
     return token;
   }
 
@@ -90,7 +111,6 @@ export class AuthService {
     });
     return `${user.firstName} deleted`;
   }
-
   async getUser(email: string, request: Request) {
     const authHeader = request.get('Authorization');
     const accessToken = authHeader.slice(7);
@@ -119,5 +139,28 @@ export class AuthService {
       data: { firstName: dto.firstName },
     });
     return user;
+  }
+
+  async logout(id: number) {
+    await this.prisma.user.updateMany({
+      where: { id: id, hashRt: { not: null } },
+      data: {
+        hashRt: null,
+      },
+    });
+    return 'User has logged out';
+  }
+  async refreshTokens(id: number, rt: string) {
+    const user = await this.prisma.user.findUnique({
+      where: {
+        id: id,
+      },
+    });
+    if (!user) throw new ForbiddenException('User does not exist');
+    const rtMatch = rt.localeCompare(user.hashRt);
+    if (rtMatch !== 0) throw new ForbiddenException('Access Denied');
+    const token = this.signToken(user.id, user.email, user.hash, user.role);
+    await this.updateRtHash(user.id, (await token).refreshToken);
+    return token;
   }
 }
