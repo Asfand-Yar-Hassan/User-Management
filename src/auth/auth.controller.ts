@@ -1,85 +1,112 @@
 // eslint-disable-next-line prettier/prettier
-import { Body, Controller, Delete, Get, HttpCode, HttpStatus, Post, Put, Query, Req, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  HttpCode,
+  HttpStatus,
+  Post,
+  Put,
+  Query,
+  Req,
+  UseFilters,
+  UseGuards,
+} from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { Request } from 'express';
-import { UpdateDto } from 'src/auth/updatedto';
 
 import { AuthService } from './auth.service';
+import { ResponseBody } from './bodies/response-body';
 import { Public } from './decorators/public.decorator';
 import { hasRoles } from './decorators/roles.decorator';
 import { AuthDto } from './dto';
-import { JwtGuard } from './guard/jwt.guard';
-import { RolesGuard } from './guard/roles.guard';
-import { Tokens } from './types';
+import { LoginDto } from './dto/login.dto';
+import { UpdateDto } from './dto/update.dto';
+import { HttpExceptionFilter } from './filters/http-exception.filters';
+import { JwtGuard, RolesGuard } from './guard';
 
 @Controller('/auth')
 export class AuthController {
   constructor(private authService: AuthService) {}
 
+  @UseFilters(HttpExceptionFilter)
   @HttpCode(HttpStatus.CREATED)
   @Post('/local/signup')
-  async signup(@Body() dto: AuthDto): Promise<Tokens> {
-    return await this.authService.signup(dto);
+  async signup(@Body() dto: AuthDto): Promise<any> {
+    const apiResponse = await this.authService.signup(dto);
+    return new ResponseBody(true, apiResponse);
   }
 
+  @UseFilters(HttpExceptionFilter)
   @Public()
   @HttpCode(HttpStatus.OK)
   @Post('/local/signin')
-  async signin(@Body() dto: AuthDto): Promise<Tokens> {
-    return await this.authService.signin(dto);
+  async signin(@Body() dto: LoginDto): Promise<any> {
+    const apiResponse = await this.authService.signin(dto);
+    return new ResponseBody(true, apiResponse);
   }
 
+  @UseFilters(HttpExceptionFilter)
   @HttpCode(HttpStatus.OK)
   @UseGuards(AuthGuard('jwt'))
   @Post('/local/logout')
   async logout(@Req() req: Request) {
     const user = req.user;
-    await this.authService.logout(user['sub']);
-    return `User has logged out`;
+    const apiResponse = await this.authService.logout(user['sub']);
+    return new ResponseBody(true, apiResponse);
   }
 
+  // @UseFilters(HttpExceptionFilter)
   @HttpCode(HttpStatus.OK)
   @hasRoles('ADMIN')
   @UseGuards(JwtGuard, RolesGuard)
   @Delete('/deletebyemail')
   async delete(@Query('email') email: string, @Req() request: Request) {
-    return await this.authService.delete(email, request);
+    const apiResponse = await this.authService.delete(email, request);
+    return new ResponseBody(true, apiResponse);
   }
 
-  @HttpCode(HttpStatus.FOUND)
-  @hasRoles('ADMIN')
-  @UseGuards(JwtGuard, RolesGuard)
+  @UseFilters(HttpExceptionFilter)
+  @UseGuards(JwtGuard)
   @Get('/getuserbyemail')
   async getUser(@Query('email') email: string, @Req() request: Request) {
-    return await this.authService.getUser(email, request);
+    const apiResponse = await this.authService.getUser(email, request);
+    return new ResponseBody(true, apiResponse);
   }
 
+  @UseFilters(HttpExceptionFilter)
   @HttpCode(HttpStatus.FOUND)
-  @UseGuards(JwtGuard)
   @Get('/getallusers')
   async getAll() {
-    return await this.authService.getAll();
+    const apiResponse = await this.authService.getAll();
+    return new ResponseBody(true, apiResponse);
   }
 
+  @UseFilters(HttpExceptionFilter)
+  @hasRoles('ADMIN')
   @HttpCode(HttpStatus.CREATED)
-  @UseGuards(JwtGuard)
+  @UseGuards(JwtGuard, RolesGuard)
   @Put('/updateuser')
   async updateUser(
     @Query('email') email: string,
     @Req() request: Request,
     @Body() dto: UpdateDto,
   ) {
-    return await this.authService.updateUser(email, request, dto);
+    const apiResponse = await this.authService.updateUser(email, request, dto);
+    return new ResponseBody(true, apiResponse);
   }
 
+  @UseFilters(HttpExceptionFilter)
   @HttpCode(HttpStatus.OK)
   @UseGuards(AuthGuard('jwt-refresh'))
   @Post('/refresh')
   async refreshTokens(@Req() request: Request) {
     const user = request.user;
-    return await this.authService.refreshTokens(
+    const apiResponse = await this.authService.refreshTokens(
       user['sub'],
       user['refreshToken'],
     );
+    return new ResponseBody(true, apiResponse);
   }
 }

@@ -5,11 +5,10 @@ import { Roles } from '@prisma/client';
 import { PrismaClientKnownRequestError } from '@prisma/client/runtime';
 import * as argon from 'argon2';
 import { Request } from 'express';
-import { UpdateDto } from 'src/auth/updatedto';
 import { PrismaService } from 'src/prisma/prisma.service';
 
 import { JwtDecode } from './decode';
-import { AuthDto } from './dto';
+import { AuthDto, LoginDto, UpdateDto } from './dto';
 import { Tokens } from './types';
 
 @Injectable()
@@ -50,7 +49,6 @@ export class AuthService {
   }
 
   async updateRtHash(id: number, rt: string) {
-    // const hash = await argon.hash(rt);
     await this.prisma.user.update({
       where: {
         id: id,
@@ -84,7 +82,8 @@ export class AuthService {
       throw error;
     }
   }
-  async signin(dto: AuthDto): Promise<Tokens> {
+
+  async signin(dto: LoginDto): Promise<Tokens> {
     const user = await this.prisma.user.findUnique({
       where: { email: dto.email },
     });
@@ -109,7 +108,7 @@ export class AuthService {
     const user = await this.prisma.user.delete({
       where: { email: email },
     });
-    return `${user.firstName} deleted`;
+    return user;
   }
   async getUser(email: string, request: Request) {
     const authHeader = request.get('Authorization');
@@ -118,6 +117,8 @@ export class AuthService {
       this.jwt,
       accessToken,
     );
+    if (email === accessEmail) {
+    }
     const user = await this.prisma.user.findUnique({
       where: { email: accessEmail },
     });
@@ -134,10 +135,12 @@ export class AuthService {
       this.jwt,
       accessToken,
     );
+
     const user = await this.prisma.user.update({
       where: { email: accessEmail },
       data: { firstName: dto.firstName },
     });
+
     return user;
   }
 
@@ -148,7 +151,7 @@ export class AuthService {
         hashRt: null,
       },
     });
-    return 'User has logged out';
+    return null;
   }
   async refreshTokens(id: number, rt: string) {
     const user = await this.prisma.user.findUnique({
