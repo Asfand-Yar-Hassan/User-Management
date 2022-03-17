@@ -4,12 +4,11 @@ import { JwtService } from '@nestjs/jwt';
 import { Roles } from '@prisma/client';
 import { PrismaClientKnownRequestError } from '@prisma/client/runtime';
 import * as argon from 'argon2';
-import { Request } from 'express';
+import { Request, Response } from 'express';
 import { PrismaService } from 'src/prisma/prisma.service';
 
 import { JwtDecode } from './decode';
 import { AuthDto, LoginDto, UpdateDto } from './dto';
-import { Tokens } from './types';
 
 @Injectable()
 export class AuthService {
@@ -21,13 +20,12 @@ export class AuthService {
     private config: ConfigService,
   ) {}
 
-  async signToken(id: number, email: string, password: string, role: Roles) {
+  async signToken(id: number, email: string, role: Roles) {
     const [at, rt] = await Promise.all([
       this.jwt.signAsync(
         {
           sub: id,
           email,
-          password,
           role,
         },
         { expiresIn: 600, secret: this.config.get('AT_SECRET') },
@@ -36,7 +34,6 @@ export class AuthService {
         {
           sub: id,
           email,
-          password,
           role,
         },
         { expiresIn: 604800, secret: this.config.get('RT_SECRET') },
@@ -59,8 +56,9 @@ export class AuthService {
     });
   }
 
-  async signup(dto: AuthDto): Promise<Tokens> {
+  async signup(dto: AuthDto, res: Response): Promise<string> {
     const hash = await argon.hash(dto.password);
+
     try {
       const user = await this.prisma.user.create({
         data: {
@@ -70,9 +68,18 @@ export class AuthService {
           role: dto.role,
         },
       });
-      const token = this.signToken(user.id, user.email, user.hash, user.role);
+
+      const token = this.signToken(user.id, user.email, user.role);
+
       await this.updateRtHash(user.id, (await token).refreshToken);
-      return token;
+
+      res.cookie('refreshToken', (await token).refreshToken, {
+        httpOnly: true,
+      });
+
+      res.cookie('accessToken', (await token).accessToken, { httpOnly: true });
+
+      return user.firstName;
     } catch (error) {
       if (error instanceof PrismaClientKnownRequestError) {
         if (error.code == 'P2002') {
@@ -83,25 +90,34 @@ export class AuthService {
     }
   }
 
-  async signin(dto: LoginDto): Promise<Tokens> {
+  async signin(dto: LoginDto, res: Response): Promise<string> {
     const user = await this.prisma.user.findUnique({
       where: { email: dto.email },
     });
+
     if (!user) throw new ForbiddenException('User Does Not Exist');
+
     const pwMatch = await argon.verify(user.hash, dto.password);
+
     if (!pwMatch) throw new ForbiddenException('Incorrect Credentials');
-    const token = this.signToken(user.id, user.email, user.hash, user.role);
+
+    const token = this.signToken(user.id, user.email, user.role);
+
     await this.updateRtHash(user.id, (await token).refreshToken);
-    return token;
+
+    res.cookie('accessToken', (await token).accessToken, { httpOnly: true });
+    res.cookie('refreshToken', (await token).refreshToken, { httpOnly: true });
+
+    return user.email;
   }
 
   async delete(email: string, request: Request) {
-    const authHeader = request.get('Authorization');
-    const accessToken = authHeader.slice(7);
+    const accessToken = request.cookies['accessToken'];
     const accessEmail = await JwtDecode.retriveUserEmailFromAccessToken(
       this.jwt,
       accessToken,
     );
+
     if (email === accessEmail) {
       return 'Cannot delete user';
     }
@@ -110,37 +126,34 @@ export class AuthService {
     });
     return user;
   }
+
   async getUser(email: string, request: Request) {
-    const authHeader = request.get('Authorization');
-    const accessToken = authHeader.slice(7);
+    const accessToken = request.cookies['accessToken'];
     const accessEmail = await JwtDecode.retriveUserEmailFromAccessToken(
       this.jwt,
       accessToken,
     );
-    if (email === accessEmail) {
-    }
     const user = await this.prisma.user.findUnique({
       where: { email: accessEmail },
     });
     return user;
   }
+
   async getAll() {
     const user = await this.prisma.user.findMany();
     return user;
   }
+
   async updateUser(email: string, request: Request, dto: UpdateDto) {
-    const authHeader = request.get('Authorization');
-    const accessToken = authHeader.slice(7);
+    const accessToken = request.cookies['accessToken'];
     const accessEmail = await JwtDecode.retriveUserEmailFromAccessToken(
       this.jwt,
       accessToken,
     );
-
     const user = await this.prisma.user.update({
       where: { email: accessEmail },
       data: { firstName: dto.firstName },
     });
-
     return user;
   }
 
@@ -153,7 +166,8 @@ export class AuthService {
     });
     return null;
   }
-  async refreshTokens(id: number, rt: string) {
+
+  async refreshTokens(id: number, rt: string, res: Response): Promise<string> {
     const user = await this.prisma.user.findUnique({
       where: {
         id: id,
@@ -162,8 +176,10 @@ export class AuthService {
     if (!user) throw new ForbiddenException('User does not exist');
     const rtMatch = rt.localeCompare(user.hashRt);
     if (rtMatch !== 0) throw new ForbiddenException('Access Denied');
-    const token = this.signToken(user.id, user.email, user.hash, user.role);
+    const token = this.signToken(user.id, user.email, user.role);
     await this.updateRtHash(user.id, (await token).refreshToken);
-    return token;
+    res.cookie('accessToken', (await token).accessToken, { httpOnly: true });
+    res.cookie('refreshToken', (await token).refreshToken, { httpOnly: true });
+    return user.email;
   }
 }

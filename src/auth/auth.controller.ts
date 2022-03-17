@@ -10,19 +10,19 @@ import {
   Put,
   Query,
   Req,
+  Res,
   UseFilters,
   UseGuards,
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
-import { Request } from 'express';
+import { Request, Response } from 'express';
 
 import { AuthService } from './auth.service';
 import { ResponseBody } from './bodies/response-body';
 import { Public } from './decorators/public.decorator';
 import { hasRoles } from './decorators/roles.decorator';
-import { AuthDto } from './dto';
+import { AuthDto, UpdateDto } from './dto';
 import { LoginDto } from './dto/login.dto';
-import { UpdateDto } from './dto/update.dto';
 import { HttpExceptionFilter } from './filters/http-exception.filters';
 import { JwtGuard, RolesGuard } from './guard';
 
@@ -33,18 +33,19 @@ export class AuthController {
   @UseFilters(HttpExceptionFilter)
   @HttpCode(HttpStatus.CREATED)
   @Post('/local/signup')
-  async signup(@Body() dto: AuthDto): Promise<any> {
-    const apiResponse = await this.authService.signup(dto);
-    return new ResponseBody(true, apiResponse);
+  async signup(@Body() dto: AuthDto, @Res() res: Response): Promise<any> {
+    const firstName = await this.authService.signup(dto, res);
+
+    return res.send(new ResponseBody(true, { firstName: firstName }));
   }
 
   @UseFilters(HttpExceptionFilter)
   @Public()
   @HttpCode(HttpStatus.OK)
   @Post('/local/signin')
-  async signin(@Body() dto: LoginDto): Promise<any> {
-    const apiResponse = await this.authService.signin(dto);
-    return new ResponseBody(true, apiResponse);
+  async signin(@Body() dto: LoginDto, @Res() res: Response): Promise<any> {
+    const userEmail = await this.authService.signin(dto, res);
+    return res.send(new ResponseBody(true, { email: userEmail }));
   }
 
   @UseFilters(HttpExceptionFilter)
@@ -57,10 +58,8 @@ export class AuthController {
     return new ResponseBody(true, apiResponse);
   }
 
-  // @UseFilters(HttpExceptionFilter)
   @HttpCode(HttpStatus.OK)
-  @hasRoles('ADMIN')
-  @UseGuards(JwtGuard, RolesGuard)
+  @UseGuards(JwtGuard)
   @Delete('/deletebyemail')
   async delete(@Query('email') email: string, @Req() request: Request) {
     const apiResponse = await this.authService.delete(email, request);
@@ -101,12 +100,13 @@ export class AuthController {
   @HttpCode(HttpStatus.OK)
   @UseGuards(AuthGuard('jwt-refresh'))
   @Post('/refresh')
-  async refreshTokens(@Req() request: Request) {
+  async refreshTokens(@Req() request: Request, @Res() response: Response) {
     const user = request.user;
-    const apiResponse = await this.authService.refreshTokens(
+    const email = await this.authService.refreshTokens(
       user['sub'],
       user['refreshToken'],
+      response,
     );
-    return new ResponseBody(true, apiResponse);
+    response.send(new ResponseBody(true, { email: email }));
   }
 }
