@@ -33,12 +33,27 @@ https://www.postgresql.org/download/
 ```
 https://www.pgadmin.org/download/
 ```
+## Download PostMan
+```
+https://www.postman.com/downloads/
+```
+
 ## Installation
 
 ```bash
 $ npm install
 ```
+## Server Connection in PgAdmin 4
+```
+host:localhost
+username:asfand
+password:password
+```
 
+## Running Docker
+```bash
+$ docker-compose up
+```
 ## Running the app
 
 ```bash
@@ -68,6 +83,15 @@ $ npm run test:e2e
 # test coverage
 $ npm run test:cov
 ```
+## Prisma Commands
+```bash
+# create new prisma migrations
+$ npx prisma migrate dev
+# sync changes with the database
+$ npx prisma db push
+# access prisma studio
+$ npx prisma studio
+
 
 ## Support
 
