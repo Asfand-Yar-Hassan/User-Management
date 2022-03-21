@@ -27,7 +27,11 @@
 [Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
 ## Download PostgreSQL
 ```
-<a href="https://www.postgresql.org/download/"/>
+https://www.postgresql.org/download/
+```
+## Download PgAdmin4
+```
+https://www.pgadmin.org/download/
 ```
 ## Installation
 
@@ -38,15 +42,19 @@ $ npm install
 ## Running the app
 
 ```bash
-# development
+# start
 $ npm run start
 
-# watch mode
+# watch mode development
 $ npm run start:dev
 
 # production mode
 $ npm run start:prod
+
+# debug mode
+$ npm run start:debug
 ```
+
 
 ## Test
 
