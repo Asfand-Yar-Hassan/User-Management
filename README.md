@@ -50,6 +50,8 @@ GET-localhost:3000/auth/getalluser (Fetches all the users in the database)
 GET-localhost:3000/auth/getuserbyemail (Fetches a user with a specific email in parameters)
 PUT-localhost:3000/auth/updateuser (Updates a user with a specific email passed in parameters)
 DELETE-localhost:3000/auth/deletebyemail (Delete a user with a specific email passed in the parameters)
+POST-localhost:3000/auth/local/logout (Logouts the user authenticated using cookies)
+POST-localhost:3000/auth/refresh (Refreshes expired refresh tokens)
 ```
 ## npm
 ```bash
