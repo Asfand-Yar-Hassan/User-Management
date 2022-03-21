@@ -13,7 +13,7 @@ https://www.postgresql.org/download/
 ```
 https://www.pgadmin.org/download/
 ```
-## Download PostMan
+## Download Postman
 ```
 https://www.postman.com/downloads/
 ```
