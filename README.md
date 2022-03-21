@@ -37,7 +37,7 @@ $ docker-compose up
 ```
 ## Running the app
 
-```
+```bash
 1.Start the server using ` $ docker-compose up ` 
 2.Connect to the server in PgAdmin4 using the credentials provided above.
 3.Run the app using ` $ npm run start:dev `
