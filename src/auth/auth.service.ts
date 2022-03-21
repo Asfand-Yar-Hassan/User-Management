@@ -130,8 +130,10 @@ export class AuthService {
       },
     });
     if (!user) throw new ForbiddenException('User does not exist');
+
     const rtMatch = rt.localeCompare(user.hashRt);
     if (rtMatch !== 0) throw new ForbiddenException('Access Denied');
+
     const token = this.signToken(user.id, user.email, user.role);
     await this.updateRtHash(user.id, (await token).refreshToken);
     res.cookie('accessToken', (await token).accessToken, { httpOnly: true });
