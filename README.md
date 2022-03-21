@@ -91,6 +91,7 @@ $ npx prisma migrate dev
 $ npx prisma db push
 # access prisma studio
 $ npx prisma studio
+```
 
 
 ## Support
