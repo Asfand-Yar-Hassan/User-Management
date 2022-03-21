@@ -3,7 +3,7 @@
 Basic user management REST API performing CRUD functions.<br>
 <b>Database :</b> PostgreSQL<br>
 <b>ORM :</b> Prisma<br>
-<b>Backend :</b> NestJs
+<b>Backend Framework:</b> NestJs
 
 ## Download PostgreSQL
 ```
