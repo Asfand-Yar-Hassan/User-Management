@@ -5,6 +5,7 @@ Basic user management REST API performing CRUD functions.<br>
 <b>ORM :</b> Prisma<br>
 <b>Backend Framework:</b> NestJs
 
+
 ## Download PostgreSQL
 ```
 https://www.postgresql.org/download/
@@ -48,6 +49,9 @@ $ npm run start:prod
 
 # debug mode
 $ npm run start:debug
+
+1.Start the server using ` $ docker-compose up ` 
+2.Run the app using `
 ```
 
 
