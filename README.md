@@ -1,6 +1,6 @@
 
 ## Description
-Basic user management REST API performing CRUD functions.<br>
+Basic user management REST API performing CRUD functions.Used accesstokens and refresh tokens in cookies to implement authentication in the API.<br>
 <b>Database :</b> PostgreSQL<br>
 <b>ORM :</b> Prisma<br>
 <b>Backend Framework:</b> NestJs
@@ -37,6 +37,21 @@ $ docker-compose up
 ```
 ## Running the app
 
+```
+1.Start the server using ` $ docker-compose up ` 
+2.Connect to the server in PgAdmin4 using the credentials provided above.
+3.Run the app using ` $ npm run start:dev `
+4.Start Postman
+5.Send any of the request from below
+
+## POST-localhost:3000/auth/local/signup (Sign Up a User)
+## POST-localhost:3000/auth/local/signin (Sign In an existing user)
+## GET-localhost:3000/auth/getalluser (Fetches all the users in the database)
+## GET-localhost:3000/auth/getuserbyemail (Fetches a user with a specific email in parameters)
+## PUT-localhost:3000/auth/updateuser (Updates a user with a specific email passed in parameters)
+## DELETE-localhost:3000/auth/deletebyemail (Delete a user with a specific email passed in the parameters)
+```
+## npm
 ```bash
 # start
 $ npm run start
@@ -49,11 +64,7 @@ $ npm run start:prod
 
 # debug mode
 $ npm run start:debug
-
-1.Start the server using ` $ docker-compose up ` 
-2.Run the app using `
 ```
-
 
 ## Test
 
