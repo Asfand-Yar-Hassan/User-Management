@@ -7,6 +7,7 @@ import { PrismaService } from 'src/prisma/prisma.service';
 @Injectable()
 export class RolesGuard implements CanActivate {
   constructor(private reflector: Reflector, private prisma: PrismaService) {}
+
   canActivate(
     context: ExecutionContext,
   ): boolean | Promise<boolean> | Observable<boolean> {

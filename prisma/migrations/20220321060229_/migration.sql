@@ -1,10 +1,14 @@
+-- CreateEnum
+CREATE TYPE "Roles" AS ENUM ('USER', 'ADMIN');
+
 -- CreateTable
 CREATE TABLE "User" (
     "id" SERIAL NOT NULL,
     "email" TEXT NOT NULL,
     "firstName" TEXT,
-    "lastName" TEXT,
-    "hash" TEXT NOT NULL
+    "hash" TEXT NOT NULL,
+    "role" "Roles" NOT NULL DEFAULT E'USER',
+    "hashRt" TEXT
 );
 
 -- CreateIndex

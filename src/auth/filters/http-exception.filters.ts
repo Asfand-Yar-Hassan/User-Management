@@ -5,6 +5,7 @@ import { HttpAdapterHost } from '@nestjs/core';
 @Catch()
 export class HttpExceptionFilter implements ExceptionFilter {
   constructor(private httpAdapterHost: HttpAdapterHost) {}
+
   catch(exception: HttpException, host: ArgumentsHost) {
     const context = host.switchToHttp();
     const response = context.getResponse();

@@ -20,42 +20,6 @@ export class AuthService {
     private config: ConfigService,
   ) {}
 
-  async signToken(id: number, email: string, role: Roles) {
-    const [at, rt] = await Promise.all([
-      this.jwt.signAsync(
-        {
-          sub: id,
-          email,
-          role,
-        },
-        { expiresIn: 600, secret: this.config.get('AT_SECRET') },
-      ),
-      this.jwt.signAsync(
-        {
-          sub: id,
-          email,
-          role,
-        },
-        { expiresIn: 604800, secret: this.config.get('RT_SECRET') },
-      ),
-    ]);
-    return {
-      accessToken: at,
-      refreshToken: rt,
-    };
-  }
-
-  async updateRtHash(id: number, rt: string) {
-    await this.prisma.user.update({
-      where: {
-        id: id,
-      },
-      data: {
-        hashRt: rt,
-      },
-    });
-  }
-
   async signup(dto: AuthDto, res: Response): Promise<string> {
     const hash = await argon.hash(dto.password);
 
@@ -94,20 +58,13 @@ export class AuthService {
     const user = await this.prisma.user.findUnique({
       where: { email: dto.email },
     });
-
     if (!user) throw new ForbiddenException('User Does Not Exist');
-
     const pwMatch = await argon.verify(user.hash, dto.password);
-
     if (!pwMatch) throw new ForbiddenException('Incorrect Credentials');
-
     const token = this.signToken(user.id, user.email, user.role);
-
     await this.updateRtHash(user.id, (await token).refreshToken);
-
     res.cookie('accessToken', (await token).accessToken, { httpOnly: true });
     res.cookie('refreshToken', (await token).refreshToken, { httpOnly: true });
-
     return user.email;
   }
 
@@ -117,7 +74,6 @@ export class AuthService {
       this.jwt,
       accessToken,
     );
-
     if (email === accessEmail) {
       return 'Cannot delete user';
     }
@@ -181,5 +137,41 @@ export class AuthService {
     res.cookie('accessToken', (await token).accessToken, { httpOnly: true });
     res.cookie('refreshToken', (await token).refreshToken, { httpOnly: true });
     return user.email;
+  }
+
+  async signToken(id: number, email: string, role: Roles) {
+    const [at, rt] = await Promise.all([
+      this.jwt.signAsync(
+        {
+          sub: id,
+          email,
+          role,
+        },
+        { expiresIn: 600, secret: this.config.get('AT_SECRET') },
+      ),
+      this.jwt.signAsync(
+        {
+          sub: id,
+          email,
+          role,
+        },
+        { expiresIn: 604800, secret: this.config.get('RT_SECRET') },
+      ),
+    ]);
+    return {
+      accessToken: at,
+      refreshToken: rt,
+    };
+  }
+
+  async updateRtHash(id: number, rt: string) {
+    await this.prisma.user.update({
+      where: {
+        id: id,
+      },
+      data: {
+        hashRt: rt,
+      },
+    });
   }
 }
