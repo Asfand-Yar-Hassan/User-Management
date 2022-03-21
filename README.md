@@ -1,6 +1,6 @@
 
 ## Description
-Basic user management REST API performing CRUD functions.Used accesstokens and refresh tokens in cookies to implement authentication in the API.<br>
+Basic user management REST API performing CRUD functions.Used access tokens and refresh tokens in cookies to implement authentication in the API.<br>
 <b>Database :</b> PostgreSQL<br>
 <b>ORM :</b> Prisma<br>
 <b>Backend Framework:</b> NestJs
