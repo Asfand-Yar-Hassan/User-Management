@@ -44,12 +44,12 @@ $ docker-compose up
 4.Start Postman
 5.Send any of the request from below
 
-## POST-localhost:3000/auth/local/signup (Sign Up a User)
-## POST-localhost:3000/auth/local/signin (Sign In an existing user)
-## GET-localhost:3000/auth/getalluser (Fetches all the users in the database)
-## GET-localhost:3000/auth/getuserbyemail (Fetches a user with a specific email in parameters)
-## PUT-localhost:3000/auth/updateuser (Updates a user with a specific email passed in parameters)
-## DELETE-localhost:3000/auth/deletebyemail (Delete a user with a specific email passed in the parameters)
+POST-localhost:3000/auth/local/signup (Sign Up a User)
+POST-localhost:3000/auth/local/signin (Sign In an existing user)
+GET-localhost:3000/auth/getalluser (Fetches all the users in the database)
+GET-localhost:3000/auth/getuserbyemail (Fetches a user with a specific email in parameters)
+PUT-localhost:3000/auth/updateuser (Updates a user with a specific email passed in parameters)
+DELETE-localhost:3000/auth/deletebyemail (Delete a user with a specific email passed in the parameters)
 ```
 ## npm
 ```bash
