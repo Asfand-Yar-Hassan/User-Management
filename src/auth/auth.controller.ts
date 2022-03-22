@@ -38,10 +38,23 @@ export class AuthController {
     return res.send(new ResponseBody(true, { firstName: firstName }));
   }
 
+  @Get('/facebook')
+  @UseGuards(AuthGuard('facebook'))
+  async facebookAuth() {
+    return HttpStatus.OK;
+  }
+  @HttpCode(HttpStatus.OK)
+  @Get('/facebook/redirect')
+  @UseGuards(AuthGuard('facebook'))
+  async facebookAuthRedirect(@Req() req: Request, @Res() res: Response) {
+    return await this.authService.facebookLogin(req, res);
+  }
+
   @Get('/google')
   @UseGuards(AuthGuard('google'))
-  // eslint-disable-next-line @typescript-eslint/no-empty-function
-  async googleAuth() {}
+  async googleAuth() {
+    return HttpStatus.OK;
+  }
 
   @Get('/google/redirect')
   @UseGuards(AuthGuard('google'))
