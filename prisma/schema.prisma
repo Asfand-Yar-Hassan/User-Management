@@ -13,7 +13,7 @@ model User{
   id Int @unique @default(autoincrement())
   email String @unique
   firstName String? 
-  hash String
+  hash String?
   role Roles @default(USER)
   hashRt String?
 }

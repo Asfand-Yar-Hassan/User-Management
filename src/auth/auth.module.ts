@@ -5,10 +5,10 @@ import { PrismaModule } from 'src/prisma/prisma.module';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
 import { RolesGuard } from './guard';
-import { AtStrategy, RtStrategy } from './strategy';
+import { AtStrategy, GoogleStrategy, RtStrategy } from './strategy';
 
 @Module({
-  providers: [AuthService, RtStrategy, AtStrategy, RolesGuard],
+  providers: [AuthService, RtStrategy, AtStrategy, RolesGuard, GoogleStrategy],
   imports: [PrismaModule, JwtModule.register({})],
   controllers: [AuthController],
 })

@@ -21,12 +21,11 @@ import { AuthService } from './auth.service';
 import { ResponseBody } from './bodies/response-body';
 import { Public } from './decorators/public.decorator';
 import { hasRoles } from './decorators/roles.decorator';
-import { AuthDto, UpdateDto } from './dto';
-import { LoginDto } from './dto/login.dto';
+import { AuthDto, LoginDto, UpdateDto } from './dto';
 import { HttpExceptionFilter } from './filters/http-exception.filters';
 import { JwtGuard, RolesGuard } from './guard';
 
-@Controller('/auth')
+@Controller()
 export class AuthController {
   constructor(private authService: AuthService) {}
 
@@ -37,6 +36,17 @@ export class AuthController {
     const firstName = await this.authService.signup(dto, res);
 
     return res.send(new ResponseBody(true, { firstName: firstName }));
+  }
+
+  @Get('/google')
+  @UseGuards(AuthGuard('google'))
+  // eslint-disable-next-line @typescript-eslint/no-empty-function
+  async googleAuth() {}
+
+  @Get('/google/redirect')
+  @UseGuards(AuthGuard('google'))
+  async googleAuthRedirect(@Req() req: Request, @Res() res: Response) {
+    return await this.authService.googleLogin(req, res);
   }
 
   @UseFilters(HttpExceptionFilter)

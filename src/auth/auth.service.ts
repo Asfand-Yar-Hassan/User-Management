@@ -32,22 +32,42 @@ export class AuthService {
           role: dto.role,
         },
       });
-
       const token = this.signToken(user.id, user.email, user.role);
-
       await this.updateRtHash(user.id, (await token).refreshToken);
-
       res.cookie('refreshToken', (await token).refreshToken, {
         httpOnly: true,
       });
-
       res.cookie('accessToken', (await token).accessToken, { httpOnly: true });
-
       return user.firstName;
     } catch (error) {
       if (error instanceof PrismaClientKnownRequestError) {
         if (error.code == 'P2002') {
           throw new ForbiddenException('Credentials Taken');
+        }
+      }
+      throw error;
+    }
+  }
+
+  async googleLogin(req: Request, res: Response): Promise<any> {
+    const googleUser = req.user;
+    if (!googleUser) return 'No user from google';
+    try {
+      const user = await this.prisma.user.create({
+        data: {
+          email: googleUser['email'],
+          firstName: googleUser['firstName'],
+          hash: null,
+        },
+      });
+      const token = this.signToken(user.id, user.email, user.role);
+      await this.updateRtHash(user.id, (await token).refreshToken);
+      res.cookie('accessToken', (await token).refreshToken, { httpOnly: true });
+      return user.firstName;
+    } catch (error) {
+      if (error instanceof PrismaClientKnownRequestError) {
+        if (error.code == 'P2002') {
+          throw new ForbiddenException('User Already Exists');
         }
       }
       throw error;
