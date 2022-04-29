@@ -6,7 +6,7 @@ CREATE TABLE "User" (
     "id" SERIAL NOT NULL,
     "email" TEXT NOT NULL,
     "firstName" TEXT,
-    "hash" TEXT NOT NULL,
+    "hash" TEXT,
     "role" "Roles" NOT NULL DEFAULT E'USER',
     "hashRt" TEXT
 );
